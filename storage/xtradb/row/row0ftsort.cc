@@ -623,7 +623,7 @@ fts_parallel_tokenization(
 	mem_heap_t*		blob_heap = NULL;
 	fts_doc_t		doc;
 	dict_table_t*		table = psort_info->psort_common->new_table;
-	dict_field_t*		idx_field;
+	dict_field_t*		idx_field __attribute__((unused));
 	fts_tokenize_ctx_t	t_ctx;
 	ulint			retried = 0;
 	dberr_t			error = DB_SUCCESS;
