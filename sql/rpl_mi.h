@@ -79,6 +79,8 @@ class Master_info : public Slave_reporting_capability
   {
     return opt_slave_parallel_threads > 0;
   }
+  void release();
+  void wait_until_free();
 
   /* the variables below are needed because we can change masters on the fly */
   char master_log_name[FN_REFLEN+6]; /* Room for multi-*/
@@ -182,6 +184,8 @@ class Master_info : public Slave_reporting_capability
   uint64 gtid_reconnect_event_skip_count;
   /* gtid_event_seen is false until we receive first GTID event from master. */
   bool gtid_event_seen;
+  uint users;                                   /* Active user for object */
+  bool killed;
 };
 int init_master_info(Master_info* mi, const char* master_info_fname,
 		     const char* slave_info_fname,
@@ -218,13 +222,12 @@ public:
   bool check_duplicate_master_info(LEX_STRING *connection_name,
                                    const char *host, uint port);
   bool add_master_info(Master_info *mi, bool write_to_file);
-  bool remove_master_info(LEX_STRING *connection_name);
+  bool remove_master_info(Master_info *mi);
   Master_info *get_master_info(LEX_STRING *connection_name,
                                Sql_condition::enum_warning_level warning);
-  bool give_error_if_slave_running();
-  uint any_slave_sql_running();
   bool start_all_slaves(THD *thd);
   bool stop_all_slaves(THD *thd);
+  void free_connections();
 };
 
 
@@ -237,6 +240,8 @@ public:
 };
 
 
+Master_info *get_master_info(LEX_STRING *connection_name,
+                             Sql_condition::enum_warning_level warning);
 bool check_master_connection_name(LEX_STRING *name);
 void create_logfile_name_with_suffix(char *res_file_name, size_t length,
                              const char *info_file, 
@@ -246,7 +251,8 @@ void create_logfile_name_with_suffix(char *res_file_name, size_t length,
 uchar *get_key_master_info(Master_info *mi, size_t *length,
                            my_bool not_used __attribute__((unused)));
 void free_key_master_info(Master_info *mi);
-
+uint any_slave_sql_running();
+bool give_error_if_slave_running(bool already_lock);
 
 #endif /* HAVE_REPLICATION */
 #endif /* RPL_MI_H */
