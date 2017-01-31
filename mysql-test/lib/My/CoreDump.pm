@@ -53,6 +53,13 @@ sub _verify_binpath {
 sub _gdb {
   my ($core_name)= @_;
 
+  # Check that gdb exists
+  `gdb --version`;
+  if ($?) {
+    print "gdb not found, cannot get the stack trace\n";
+    return;
+  }
+
   if (-f $core_name) {
     print "\nTrying 'gdb' to get a backtrace from coredump $core_name\n";
   } else {
