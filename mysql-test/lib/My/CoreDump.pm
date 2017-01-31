@@ -53,9 +53,12 @@ sub _verify_binpath {
 sub _gdb {
   my ($core_name)= @_;
 
-  print "\nTrying 'gdb' to get a backtrace\n";
-
-  return unless -f $core_name;
+  if (-f $core_name) {
+    print "\nTrying 'gdb' to get a backtrace from coredump $core_name\n";
+  } else {
+    print "\nCoredump $core_name does not exist, cannot run 'gdb'\n";
+    return;
+  }
 
   # Find out name of binary that generated core
   `gdb -c '$core_name' --batch 2>&1` =~
