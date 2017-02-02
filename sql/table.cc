@@ -7313,6 +7313,9 @@ int TABLE::update_virtual_fields(handler *h, enum_vcol_update_mode update_mode)
   bool handler_pushed= 0;
   DBUG_ASSERT(vfield);
 
+  if (h->key_read)
+    DBUG_RETURN(0);
+
   error= 0;
   in_use->reset_arena_for_cached_items(expr_arena);
 
@@ -7336,7 +7339,6 @@ int TABLE::update_virtual_fields(handler *h, enum_vcol_update_mode update_mode)
     switch (update_mode) {
     case VCOL_UPDATE_FOR_READ:
       update= !vcol_info->stored_in_db
-           && !(h->key_read && vf->part_of_key.is_set(h->active_index))
            && bitmap_is_set(vcol_set, vf->field_index);
       swap_values= 1;
       break;
