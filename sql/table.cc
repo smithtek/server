@@ -6249,7 +6249,7 @@ void TABLE::mark_columns_needed_for_delete()
 
 void TABLE::mark_columns_needed_for_update()
 {
-  DBUG_ENTER("mark_columns_needed_for_update");
+  DBUG_ENTER("TABLE::mark_columns_needed_for_update");
   bool need_signal= false;
 
   mark_columns_per_binlog_row_image();
