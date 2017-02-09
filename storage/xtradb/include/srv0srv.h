@@ -1078,6 +1078,7 @@ void
 srv_release_threads(enum srv_thread_type type, ulint n);
 
 /**********************************************************************//**
+Wake up the purge threads. */
 UNIV_INTERN
 void
 srv_purge_wakeup();
