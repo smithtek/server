@@ -1312,11 +1312,23 @@ handle_rpl_parallel_thread(void *arg)
     }
     if (!in_event_group)
     {
+      /* If we are in a FLUSH TABLES FOR READ LOCK, wait for it */
+      while (rpt->current_entry && rpt->pause_for_ftwrl)
+      {
+        mysql_mutex_lock(&rpt->current_entry->LOCK_parallel_entry);
+        mysql_mutex_unlock(&rpt->LOCK_rpl_thread);
+        if (rpt->pause_for_ftwrl)
+          mysql_cond_wait(&rpt->current_entry->COND_parallel_entry,
+                          &rpt->current_entry->LOCK_parallel_entry);
+        mysql_mutex_unlock(&rpt->current_entry->LOCK_parallel_entry);
+        mysql_mutex_lock(&rpt->LOCK_rpl_thread);
+      }
       rpt->current_owner= NULL;
       /* Tell wait_for_done() that we are done, if it is waiting. */
       if (likely(rpt->current_entry) &&
           unlikely(rpt->current_entry->force_abort))
         mysql_cond_broadcast(&rpt->COND_rpl_thread_stop);
+
       rpt->current_entry= NULL;
       if (!rpt->stop)
         rpt->pool->release_thread(rpt);
