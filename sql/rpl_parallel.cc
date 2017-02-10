@@ -1523,12 +1523,13 @@ err:
   SQL threads running.
 */
 
-void rpl_parallel_resize_pool_if_no_slaves(void)
+int rpl_parallel_resize_pool_if_no_slaves(void)
 {
   /* master_info_index is set to NULL on shutdown */
   if (opt_slave_parallel_threads > 0 && !any_slave_sql_running() &&
       master_info_index)
-    rpl_parallel_inactivate_pool(&global_rpl_thread_pool);
+    return rpl_parallel_inactivate_pool(&global_rpl_thread_pool);
+  return 0;
 }
 
 

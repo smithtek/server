@@ -3158,10 +3158,13 @@ end_with_restore_list:
     if ((mi= get_master_info(&lex_mi->connection_name,
                              Sql_condition::WARN_LEVEL_ERROR)))
     {
-      if (!stop_slave(thd, mi, 1/* net report*/))
-        my_ok(thd);
+      if (stop_slave(thd, mi, 1/* net report*/))
+        res= 1;
       mi->release();
-      rpl_parallel_resize_pool_if_no_slaves();
+      if (rpl_parallel_resize_pool_if_no_slaves())
+        res= 1;
+      if (!res)
+        my_ok(thd);
     }
     break;
   }
