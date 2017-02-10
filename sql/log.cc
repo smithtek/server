@@ -2702,15 +2702,15 @@ int MYSQL_LOG::generate_new_name(char *new_name, const char *log_name)
 void MYSQL_QUERY_LOG::reopen_file()
 {
   char *save_name;
-
   DBUG_ENTER("MYSQL_LOG::reopen_file");
+
+  mysql_mutex_lock(&LOCK_log);
   if (!is_open())
   {
     DBUG_PRINT("info",("log is closed"));
+    mysql_mutex_unlock(&LOCK_log);
     DBUG_VOID_RETURN;
   }
-
-  mysql_mutex_lock(&LOCK_log);
 
   save_name= name;
   name= 0;				// Don't free name
@@ -2870,13 +2870,6 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
   DBUG_ENTER("MYSQL_QUERY_LOG::write");
 
   mysql_mutex_lock(&LOCK_log);
-
-  if (!is_open())
-  {
-    mysql_mutex_unlock(&LOCK_log);
-    DBUG_RETURN(0);
-  }
-
   if (is_open())
   {						// Safety agains reopen
     int tmp_errno= 0;
@@ -4842,20 +4835,20 @@ int MYSQL_BIN_LOG::new_file_impl(bool need_lock)
   bool delay_close= false;
   File old_file;
   LINT_INIT(old_file);
-
   DBUG_ENTER("MYSQL_BIN_LOG::new_file_impl");
-  if (!is_open())
-  {
-    DBUG_PRINT("info",("log is closed"));
-    DBUG_RETURN(error);
-  }
 
   if (need_lock)
     mysql_mutex_lock(&LOCK_log);
-  mysql_mutex_lock(&LOCK_index);
-
   mysql_mutex_assert_owner(&LOCK_log);
-  mysql_mutex_assert_owner(&LOCK_index);
+
+  if (!is_open())
+  {
+    DBUG_PRINT("info",("log is closed"));
+    mysql_mutex_unlock(&LOCK_log);
+    DBUG_RETURN(error);
+  }
+
+  mysql_mutex_lock(&LOCK_index);
 
   /* Reuse old name if not binlog and not update log */
   new_name_ptr= name;
